@@ -4,25 +4,16 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+groups = []
+students = []
+
 @app.route('/api/groups', methods=['GET'])
 def get_groups():
     """
     Route to get all groups
     return: Array of group objects
     """
-    # TODO: (sample response below)
-    return jsonify([
-        {
-            "id": 1,
-            "groupName": "Group 1",
-            "members": [1, 2, 3],
-        },
-        {
-            "id": 2,
-            "groupName": "Group 2",
-            "members": [4, 5],
-        },
-    ])
+    return jsonify(groups)
 
 @app.route('/api/students', methods=['GET'])
 def get_students():
@@ -30,14 +21,7 @@ def get_students():
     Route to get all students
     return: Array of student objects
     """
-    # TODO: (sample response below)
-    return jsonify([
-        {"id": 1, "name": "Alice"},
-        {"id": 2, "name": "Bob"},
-        {"id": 3, "name": "Charlie"},
-        {"id": 4, "name": "David"},
-        {"id": 5, "name": "Eve"},
-    ])
+    return jsonify(students)
 
 @app.route('/api/groups', methods=['POST'])
 def create_group():
@@ -53,13 +37,15 @@ def create_group():
     group_name = group_data.get("groupName")
     group_members = group_data.get("members")
     
-    # TODO: implement storage of a new group and return their info (sample response below)
+    if not group_name:
+        abort (400, "Group name required")
 
-    return jsonify({
-        "id": 3,
-        "groupName": "New Group",
-        "members": [1, 2],
-    }), 201
+    new_group = {
+        "id": len(groups) + 1, "groupName": group_name, "members": group_members
+    }
+    groups.append(new_group)
+
+    return jsonify(new_group), 201
 
 @app.route('/api/groups/<int:group_id>', methods=['DELETE'])
 def delete_group(group_id):
@@ -68,7 +54,16 @@ def delete_group(group_id):
     param group_id: The ID of the group to delete
     return: Empty response with status code 204
     """
-    # TODO: (delete the group with the specified id)
+
+    count = 0
+    element_to_remove = -1
+    for group in groups:
+        if group["id"] == group_id:
+            element_to_remove = count
+        count += 1
+
+    if element_to_remove != -1:
+        groups.pop(element_to_remove)
 
     return '', 204  # Return 204 (do not modify this line)
 
@@ -79,19 +74,12 @@ def get_group(group_id):
     param group_id: The ID of the group to retrieve
     return: The group object with member details
     """
-    # TODO: (sample response below)
-    return jsonify({
-        "id": 1,
-        "groupName": "Group 1",
-        "members": [
-            {"id": 1, "name": "Alice"},
-            {"id": 2, "name": "Bob"},
-            {"id": 3, "name": "Charlie"},
-        ],
-    })
-    # TODO:
-    # if group id isn't valid:
-    #     abort(404, "Group not found")
+
+    for group in groups:
+        if group["id"] == group_id:
+            return jsonify(group)
+            
+    abort (404, "Group not found")
 
 if __name__ == '__main__':
     app.run(port=3902, debug=True)
